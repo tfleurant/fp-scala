@@ -36,3 +36,13 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+.metals
+.bsp
+.bsp/*
+.idea
+.idea/*
+.bloop
+.lh
+project/metals.sbt
+project/project

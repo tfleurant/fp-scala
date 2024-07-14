@@ -1,48 +1,40 @@
 package datastructures
 
-sealed trait Tree[+A]
-case class Leaf[A](value: A) extends Tree[A]
-case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
+enum Tree[+A]:
+  case Leaf(value: A)
+  case Branch(left: Tree[A], right: Tree[A])
 
-object Tree {
-  def size[A](tree: Tree[A]): Int =
-    tree match {
-      case Leaf(_)             => 1
-      case Branch(left, right) => 1 + size(left) + size(right)
-    }
+  def size: Int = this match
+    case Tree.Leaf(_)             => 1
+    case Tree.Branch(left, right) => 1 + left.size + right.size
 
-  def maximum(tree: Tree[Int]): Int =
-    tree match {
-      case Leaf(value)         => value
-      case Branch(left, right) => maximum(left) max maximum(right)
-    }
+  def depth: Int = this match
+    case Tree.Leaf(_)             => 1
+    case Tree.Branch(left, right) => 1 + left.depth.max(right.depth)
 
-  def depth[A](tree: Tree[A]): Int =
-    tree match {
-      case Leaf(_)             => 0
-      case Branch(left, right) => 1 + (depth(left) max depth(right))
-    }
+  def map[B](f: A => B): Tree[B] = this match
+    case Tree.Leaf(value)         => Tree.Leaf(f(value))
+    case Tree.Branch(left, right) => Tree.Branch(left.map(f), right.map(f))
 
-  def map[A, B](tree: Tree[A])(f: A => B): Tree[B] =
-    tree match {
-      case Leaf(value)         => Leaf(f(value))
-      case Branch(left, right) => Branch(map(left)(f), map(right)(f))
-    }
+  def fold[B](f: A => B, g: (B, B) => B): B = this match
+    case Tree.Leaf(value)         => f(value)
+    case Tree.Branch(left, right) => g(left.fold(f, g), right.fold(f, g))
 
-  def fold[A, B](tree: Tree[A])(f: A => B)(g: (B, B) => B): B = tree match {
-    case Leaf(value)         => f(value)
-    case Branch(left, right) => g(fold(left)(f)(g), fold(right)(f)(g))
-  }
+  def sizeViaFold: Int = fold(_ => 1, (x, y) => 1 + x + y)
+  def depthViaFold: Int = fold(_ => 1, (x, y) => 1 + x.max(y))
+  def mapViaFold[B](f: A => B): Tree[B] = fold(f.andThen(Leaf.apply), Tree.Branch.apply)
 
-  def sizeWithFold[A](tree: Tree[A]): Int = fold(tree)(_ => 1)(1 + _ + _)
+object Tree:
+  // Example of extension method for a tree of a specific type (previously implicit class in scala 2)
+  extension (t: Tree[Int])
+    def firstPositive: Int = t match
+      case Tree.Leaf(value) => value
+      case Tree.Branch(left, right) =>
+        val lpos = left.firstPositive
+        if lpos > 0 then lpos else right.firstPositive
 
-  def maximumWithFold(tree: Tree[Int]): Int =
-    fold(tree)(a => a)(_ max _)
+    def maximum: Int = t match
+      case Tree.Leaf(value)         => value
+      case Tree.Branch(left, right) => left.maximum.max(right.maximum)
 
-  def depthWithFold[A](tree: Tree[A]): Int =
-    fold(tree)(_ => 0)((a, b) => 1 + (a max b))
-
-  def mapWithFold[A, B](tree: Tree[A])(f: A => B): Tree[B] =
-    fold(tree)(a => Leaf[B](f(a)): Tree[B])(Branch(_, _))
-
-}
+    def maximumViaFold: Int = t.fold(identity, (x, y) => x.max(y))

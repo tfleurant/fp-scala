@@ -2,137 +2,162 @@ package datastructures
 
 import scala.annotation.tailrec
 
-sealed trait List[+A]
-case object Nil extends List[Nothing]
-case class Cons[+A](head: A, tail: List[A]) extends List[A]
+// +A -> Covrariant in A
+// For List[A], List[B], if A is subtype of B, then List[A] is subtype of List[B]
+// Without +, the List would be invariant, with Nothing subtype of everything
+enum List[+A]:
+  case Nil // Scala infers than Nil is List[Nothing]
+  case Cons(head: A, tail: List[A]) // :: in standard library
 
-object List {
-
+object List:
   def apply[A](as: A*): List[A] =
-    if (as.isEmpty) {
-      Nil
-    } else {
-      Cons(as.head, apply(as.tail: _*))
-    }
+    if as.isEmpty then Nil
+    else Cons(as.head, apply(as.tail*))
 
-  def tail[A](list: List[A]): List[A] = list match {
-    case Nil           => throw new NoSuchElementException("list is empty")
-    case Cons(_, tail) => tail
-  }
+  def sum(ints: List[Int]): Int = ints match
+    case Nil              => 0
+    case Cons(head, tail) => head + sum(tail)
 
-  def setHead[A](list: List[A], newHead: A): List[A] = list match {
-    case Nil           => throw new NoSuchElementException("list is empty")
-    case Cons(_, tail) => Cons(newHead, tail)
-  }
+  def product(doubles: List[Double]): Double = doubles match
+    case Nil              => 1.0
+    case Cons(head, tail) => head * product(tail)
 
-  @tailrec
-  def drop[A](as: List[A], n: Int): List[A] = as match {
-    case Nil if n > 0           => throw new NoSuchElementException("list is empty")
-    case Cons(_, tail) if n > 0 => drop(tail, n - 1)
-    case remainder              => remainder
-  }
+  def tail[A](l: List[A]): List[A] = l match
+    case Nil              => sys.error("List is empty")
+    case Cons(head, tail) => tail
+
+  def setHead[A](l: List[A], newHead: A): List[A] = l match
+    case Nil              => sys.error("List is empty, can't replace head")
+    case Cons(head, tail) => Cons(newHead, tail)
 
   @tailrec
-  def dropWhile[A](l: List[A])(f: A => Boolean): List[A] = l match {
-    case Cons(head, tail) if f(head) => dropWhile(tail)(f)
-    case x                           => x
-  }
-
-  def append[A](a1: List[A], a2: List[A]): List[A] =
-    a1 match {
-      case Nil        => a2
-      case Cons(h, t) => Cons(h, append(t, a2))
-    }
-
-  def init[A](l: List[A]): List[A] = l match {
-    case Nil              => Nil
-    case Cons(_, Nil)     => Nil
-    case Cons(head, tail) => Cons(head, init(tail))
-  }
-
-  def foldRight[A, B](as: List[A], z: B)(f: (A, B) => B): B = // This is not stack safe
-    as match {
-      case Nil         => z
-      case Cons(x, xs) => f(x, foldRight(xs, z)(f))
-    }
-
-  def sum2(ns: List[Int]): Int =
-    foldRight(ns, 0)((x, y) => x + y)
-
-  def product2(ns: List[Double]): Double =
-    foldRight(ns, 1.0)(_ * _)
-
-  def length[A](as: List[A]): Int = foldRight(as, 0)((_, b) => b + 1)
+  def drop[A](l: List[A], n: Int): List[A] = l match
+    case List.Cons(head, tail) if n > 0 => List.drop(tail, n - 1)
+    case list                           => list
 
   @tailrec
-  def foldLeft[A, B](as: List[A], z: B)(f: (B, A) => B): B = as match {
-    case Nil              => z
-    case Cons(head, tail) => foldLeft(tail, f(z, head))(f)
-  }
+  def dropWhile[A](l: List[A], predicate: A => Boolean): List[A] = l match
+    case List.Cons(head, tail) if predicate(head) => List.dropWhile(tail, predicate)
+    case list                                     => list
 
-  def sum(ns: List[Int]): Int =
-    foldLeft(ns, 0)((x, y) => x + y)
+  def append[A](a1: List[A], a2: List[A]): List[A] = a1 match
+    case List.Nil              => a2
+    case List.Cons(head, tail) => List.Cons(head, append(tail, a2))
 
-  def product(ns: List[Double]): Double =
-    foldLeft(ns, 1.0)(_ * _)
+  // This can't be O(1), as we need to go to the end of the List to remove the last element (so O(n))
+  def init[A](l: List[A]): List[A] = l match
+    case List.Cons(head, tail) if tail != List.Nil => List.Cons(head, init(tail))
+    case _                                         => List.Nil
 
-  def lengthLeft[A](as: List[A]): Int = foldLeft(as, 0)((a, _) => a + 1)
+  // As it is not tail recursive, this will result in StackOverflowError on large list
+  def foldRight[A, B](as: List[A], acc: B, f: (A, B) => B): B = as match
+    case List.Nil              => acc
+    case List.Cons(head, tail) => f(head, foldRight(tail, acc, f))
 
-  def reverse[A](list: List[A]): List[A] =
-    foldLeft(list, List[A]())((a, b) => Cons(b, a))
+  def sumViaFoldRight(ns: List[Int]): Int = foldRight(ns, 0, (a, b) => a + b)
 
-  def appendWithFold[A](a1: List[A], a2: List[A]): List[A] =
-    foldRight(a1, a2)((a, acc) => Cons(a, acc))
+  // Contrary to product, this implementation needs to evaluate the full list, there is no short circuit (O(n))
+  def productViaFoldRight(ns: List[Double]): Double = foldRight(ns, 1.0, (a, b) => a * b)
 
-  def flatten[A](input: List[List[A]]): List[A] =
-    foldRight(input, List[A]())((a, acc) => appendWithFold(a, acc))
+  def length[A](list: List[A]): Int = list match
+    case List.Nil              => 0
+    case List.Cons(head, tail) => 1 + List.length(tail)
 
-  def add1(ns: List[Int]): List[Int] =
-    foldRight(ns, List[Int]())((b, acc) => Cons(b + 1, acc))
+  @tailrec
+  def foldLeft[A, B](as: List[A], acc: B, f: (B, A) => B): B = as match
+    case List.Nil              => acc
+    case List.Cons(head, tail) => foldLeft(tail, f(acc, head), f)
 
-  def toStringList(ns: List[Double]): List[String] =
-    foldRight(ns, List[String]())((b, acc) => Cons(b.toString, acc))
+  def sumViaFoldLeft(ns: List[Int]): Int = foldLeft(ns, 0, _ + _)
 
-  def map[A, B](as: List[A])(f: A => B): List[B] =
-    foldRight(as, List[B]())((b, acc) => Cons(f(b), acc))
+  def productViaFoldLeft(ns: List[Double]): Double = foldLeft(ns, 1.0, _ * _)
 
-  def filter[A](as: List[A])(f: A => Boolean): List[A] =
-    foldRight(as, List[A]()) { (b, acc) =>
-      if (f(b)) { Cons(b, acc) }
-      else { acc }
-    }
+  def lengthViaFoldLeft[A](ns: List[A]): Int = foldLeft(ns, 0, (acc, _) => acc + 1)
 
-  def flatMap[A, B](as: List[A])(f: A => List[B]): List[B] = flatten(map(as)(f))
+  def reverse[A](l: List[A]): List[A] = foldLeft(l, Nil, (acc, e) => Cons(e, acc))
 
-  def filterWithFlatMap[A](as: List[A])(f: A => Boolean): List[A] =
-    flatMap(as) { a =>
-      if (f(a)) { List(a) }
-      else { List() }
-    }
+  // This is stack safe
+  def foldRightAsFoldLeft[A, B](as: List[A], acc: B, f: (A, B) => B): B = foldLeft(reverse(as), acc, (b, a) => f(a, b))
 
-  def addIntLists(l1: List[Int], l2: List[Int]): List[Int] = (l1, l2) match {
-    case (_, Nil)                     => Nil
-    case (Nil, _)                     => Nil
-    case (Cons(h1, t1), Cons(h2, t2)) => Cons(h1 + h2, addIntLists(t1, t2))
-  }
+  // Not stack safe
+  def foldRightAsFoldLeft2[A, B](as: List[A], acc: B, f: (A, B) => B): B =
+    foldLeft(as, (b: B) => b, (g, a) => b => g(f(a, b)))(acc)
 
-  def zipWith[A, B, C](l1: List[A], l2: List[B])(f: (A, B) => C): List[C] = (l1, l2) match {
-    case (_, Nil) => Nil
-    case (Nil, _) => Nil
-    case (Cons(h1, t1), Cons(h2, t2)) => Cons(f(h1, h2), zipWith(t1, t2)(f))
-  }
+  // Not stack safe
+  def foldLeftAsFoldRight[A, B](as: List[A], acc: B, f: (B, A) => B): B =
+    foldRight(as, (b: B) => b, (a, g) => b => g(f(b, a)))(acc)
 
-  @annotation.tailrec
-  def startsWith[A](l: List[A], prefix: List[A]): Boolean = (l,prefix) match {
-    case (_,Nil) => true
-    case (Cons(h,t),Cons(h2,t2)) if h == h2 => startsWith(t, t2)
-    case _ => false
-  }
-  @annotation.tailrec
-  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = sup match {
-    case Nil => sub == Nil
-    case _ if startsWith(sup, sub) => true
-    case Cons(_,t) => hasSubsequence(t, sub)
-  }
+  def appendViaFoldRight[A](a1: List[A], a2: List[A]): List[A] = foldRight(a1, a2, (x, acc) => Cons(x, acc))
 
-}
+  def flatten[A](ll: List[List[A]]): List[A] = foldLeft(ll, Nil, (acc, x) => List.append(acc, x))
+
+  def add1(l: List[Int]): List[Int] = foldRight(l, Nil, (x, acc) => List.Cons(x + 1, acc))
+
+  def doublesToStrings(l: List[Double]): List[String] = foldRight(l, Nil, (x, acc) => List.Cons(x.toString, acc))
+
+  def map[A, B](as: List[A], f: A => B): List[B] = foldRight(as, Nil: List[B], (x, acc) => List.Cons(f(x), acc))
+
+  def filter[A](as: List[A], f: A => Boolean): List[A] =
+    foldRight(as, Nil: List[A], (x, acc) => if f(x) then Cons(x, acc) else acc)
+
+  def flatMap[A, B](as: List[A], f: A => List[B]): List[B] = foldRight(as, Nil, (x, acc) => append(f(x), acc))
+
+  // A simpler implementation
+  def flatMapSimple[A, B](as: List[A], f: A => List[B]): List[B] = flatten(map(as, f))
+
+  def filterViaFlatMap[A](as: List[A], f: A => Boolean): List[A] =
+    flatMap(as, x => if f(x) then List(x) else Nil)
+
+  def addPairWise(as: List[Int], bs: List[Int]): List[Int] =
+    (as, bs) match
+      case (Nil, _)                                 => Nil
+      case (_, Nil)                                 => Nil
+      case (Cons(headA, tailA), Cons(headB, tailB)) => Cons(headA + headB, addPairWise(tailA, tailB))
+
+  // This is not stack safe, as we are not tailrec
+  def zipWith[A, B, C](as: List[A], bs: List[B], f: (A, B) => C): List[C] =
+    (as, bs) match
+      case (Nil, _)                                 => Nil
+      case (_, Nil)                                 => Nil
+      case (Cons(headA, tailA), Cons(headB, tailB)) => Cons(f(headA, headB), zipWith(tailA, tailB, f))
+
+  // The accumulated value is passed in recursing call instead of first recursing
+  def zipWithTailRec[A, B, C](as: List[A], bs: List[B], f: (A, B) => C): List[C] =
+    @tailrec
+    def loop(as: List[A], bs: List[B], acc: List[C]): List[C] =
+      (as, bs) match
+        case (Nil, _)                                 => Nil
+        case (_, Nil)                                 => Nil
+        case (Cons(headA, tailA), Cons(headB, tailB)) => loop(tailA, tailB, Cons(f(headA, headB), acc))
+    reverse(loop(as, bs, Nil))
+
+  @tailrec
+  def startsWith[A](sup: List[A], sub: List[A]): Boolean =
+    (sup, sub) match
+      case (Cons(headA, tailA), Cons(headB, tailB)) if headA == headB => startsWith(tailA, tailB)
+      case (_, Nil)                                                   => true
+      case (Nil, _)                                                   => false
+      case _                                                          => false
+
+  // Intuitive version
+  @tailrec
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean =
+    (sup, sub) match
+      case (a, b) if startsWith(a, b) => true
+      case (Cons(headA, tailA), b)    => hasSubsequence(tailA, b)
+      case _                          => false
+
+  // Book version
+  @tailrec
+  def startsWithAlt[A](sup: List[A], sub: List[A]): Boolean =
+    (sup, sub) match
+      case (_, Nil) => true
+      case (Cons(headA, tailA), Cons(headB, tailB)) if headA == headB => startsWithAlt(tailA, tailB)
+      case _ => false
+
+  @tailrec
+  def hasSubsequenceAlt[A](sup: List[A], sub: List[A]): Boolean =
+    sup match
+      case List.Nil => sub == List.Nil
+      case _ if startsWithAlt(sup, sub) => true
+      case List.Cons(head, tail) => hasSubsequenceAlt(tail, sub)
