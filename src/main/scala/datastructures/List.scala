@@ -151,13 +151,13 @@ object List:
   @tailrec
   def startsWithAlt[A](sup: List[A], sub: List[A]): Boolean =
     (sup, sub) match
-      case (_, Nil) => true
+      case (_, Nil)                                                   => true
       case (Cons(headA, tailA), Cons(headB, tailB)) if headA == headB => startsWithAlt(tailA, tailB)
-      case _ => false
+      case _                                                          => false
 
   @tailrec
   def hasSubsequenceAlt[A](sup: List[A], sub: List[A]): Boolean =
     sup match
-      case List.Nil => sub == List.Nil
+      case List.Nil                     => sub == List.Nil
       case _ if startsWithAlt(sup, sub) => true
-      case List.Cons(head, tail) => hasSubsequenceAlt(tail, sub)
+      case List.Cons(head, tail)        => hasSubsequenceAlt(tail, sub)
