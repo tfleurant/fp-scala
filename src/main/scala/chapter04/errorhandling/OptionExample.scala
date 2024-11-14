@@ -1,6 +1,6 @@
-package errorhandling
+package chapter04.errorhandling
 
-import errorhandling.Option._
+import Option._
 
 object OptionExample {
   def insuranceRateQuote(age: Int, numberOfSpeedingTickets: Int): Double = (100 - age) * 0.2 * numberOfSpeedingTickets

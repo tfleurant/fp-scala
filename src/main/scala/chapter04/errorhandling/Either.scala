@@ -1,4 +1,4 @@
-package errorhandling
+package chapter04.errorhandling
 
 import scala.util.control.NonFatal
 

@@ -1,4 +1,4 @@
-package strictnesslazyness
+package chapter05.strictnesslazyness
 
 import munit.FunSuite
 

@@ -1,6 +1,6 @@
-package datastructures
+package chapter03.datastructures
 
-import datastructures.Tree.Branch
+import Tree.Branch
 import munit.FunSuite
 
 class TreeSpec extends FunSuite {

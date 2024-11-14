@@ -1,4 +1,4 @@
-package errorhandling
+package chapter04.errorhandling
 
 enum Validated[+E, +A]:
   case Valid(get: A)

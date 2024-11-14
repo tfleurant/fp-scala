@@ -1,8 +1,8 @@
-package errorhandling
+package chapter04.errorhandling
 
 import munit.FunSuite
 
-import errorhandling.Option.*
+import Option.*
 
 class OptionSpec extends FunSuite {
   test("map should apply when the Option is not None") {

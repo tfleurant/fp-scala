@@ -1,4 +1,4 @@
-package datastructures
+package chapter03.datastructures
 
 class ListSpec extends munit.FunSuite {
   test("tail should remove head when List is not empty") {

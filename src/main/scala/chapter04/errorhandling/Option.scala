@@ -1,4 +1,4 @@
-package errorhandling
+package chapter04.errorhandling
 
 enum Option[+A]:
   case Some(get: A)

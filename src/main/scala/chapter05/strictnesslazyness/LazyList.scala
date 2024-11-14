@@ -1,4 +1,4 @@
-package strictnesslazyness
+package chapter05.strictnesslazyness
 
 import scala.annotation.tailrec
 

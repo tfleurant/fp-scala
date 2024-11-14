@@ -1,4 +1,4 @@
-package datastructures
+package chapter03.datastructures
 
 enum Tree[+A]:
   case Leaf(value: A)
