@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaSbtSettings">
+    <option name="customLauncherPath" />
     <option name="customVMPath" />
     <option name="linkedExternalProjectsSettings">
       <SbtProjectSettings>
@@ -13,6 +14,7 @@
           </set>
         </option>
         <option name="sbtVersion" value="1.10.1" />
+        <option name="separateProdAndTestSources" value="true" />
       </SbtProjectSettings>
     </option>
   </component>

@@ -70,5 +70,5 @@ object Either:
 
   def sequenceAll[E, A](as: List[Either[List[E], A]]): Either[List[E], List[A]] =
     traverseAll(as, identity)
-    
+
   // This accumulation behaviour leads us to Validated
