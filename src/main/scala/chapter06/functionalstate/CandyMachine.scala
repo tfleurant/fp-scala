@@ -1,10 +1,11 @@
 package chapter06.functionalstate
 
-object CandyMachine:
+object CandyMachine {
 
-  object Me:
-    enum Input:
+  object Me {
+    enum Input {
       case Coin, Turn
+    }
 
     case class Machine(locked: Boolean, candies: Int, coins: Int)
 
@@ -13,7 +14,7 @@ object CandyMachine:
     // We do not need State.modify as in the Solution, as we have our private simulateMachine returns a State
     // State.traverse would have been nice, to have State.traverse(inputs)(simulateMachine) instead of the Sequence
     // The solution has a much nicer state transition description compare to the multiple methods here, as we have to deal with State all the way
-    object Machine:
+    object Machine {
       def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = for {
         _ <- State.sequence(inputs.map(simulateMachine))
         s <- State.get
@@ -22,9 +23,10 @@ object CandyMachine:
       private def simulateMachine(input: Input): State[Machine, (Int, Int)] = State {
         case m @ Machine(_, 0, coins) => ((0, coins), m)
         case m =>
-          input match
+          input match {
             case Input.Coin => insertCoin().run(m)
             case Input.Turn => turnKnob().run(m)
+          }
       }
 
       private def insertCoin(): State[Machine, (Int, Int)] = State {
@@ -40,14 +42,17 @@ object CandyMachine:
           val newCandies = candies - 1
           ((newCandies, coins), Machine(true, newCandies, coins))
       }
+    }
+  }
 
-  object Solution:
-    enum Input:
+  object Solution {
+    enum Input {
       case Coin, Turn
+    }
 
     case class Machine(locked: Boolean, candies: Int, coins: Int)
 
-    object Machine:
+    object Machine {
 
       // Thanks to new traverse method, we can easily transform the machine
       def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
@@ -60,9 +65,13 @@ object CandyMachine:
       // The method is curried in a val to be easier to pass to State.modify
       private val update = (i: Input) =>
         (s: Machine) =>
-          (i, s) match
+          (i, s) match {
             case (_, Machine(_, 0, _))                        => s
             case (Input.Coin, Machine(false, _, _))           => s
             case (Input.Turn, Machine(true, _, _))            => s
             case (Input.Coin, Machine(true, candies, coins))  => Machine(false, candies, coins + 1)
             case (Input.Turn, Machine(false, candies, coins)) => Machine(true, candies - 1, coins)
+          }
+    }
+  }
+}

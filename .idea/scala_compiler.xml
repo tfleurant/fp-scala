@@ -2,6 +2,11 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <option name="separateProdTestSources" value="true" />
-    <profile name="sbt 1" modules="fp-scala,fp-scala.main,fp-scala.test" />
+    <profile name="sbt 1" modules="fp-scala" />
+    <profile name="sbt 2" modules="fp-scala.main,fp-scala.test">
+      <parameters>
+        <parameter value="-no-indent" />
+      </parameters>
+    </profile>
   </component>
 </project>

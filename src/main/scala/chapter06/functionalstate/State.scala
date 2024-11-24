@@ -7,8 +7,8 @@ opaque type State[S, +A] = S => (A, S)
 
 // opaque type has same encapsulation as a case class, and same performances as type alias (no runtime overhead for wrapping function)
 
-object State:
-  extension [S, A](underlying: State[S, A])
+object State {
+  extension [S, A](underlying: State[S, A]) {
     def run(s: S): (A, S) = underlying(s)
 
     def map[B](f: A => B): State[S, B] =
@@ -20,10 +20,11 @@ object State:
         b <- sb
       } yield f(a, b)
 
-    def flatMap[B](f: A => State[S, B]): State[S, B] =
-      s =>
-        val (a, s1) = underlying(s)
-        f(a)(s1)
+    def flatMap[B](f: A => State[S, B]): State[S, B] = { s =>
+      val (a, s1) = underlying(s)
+      f(a)(s1)
+    }
+  }
 
   def apply[S, A](f: S => (A, S)): State[S, A] = f
 
@@ -44,3 +45,4 @@ object State:
 
   def traverse[S, A, B](as: List[A])(f: A => State[S, B]): State[S, List[B]] =
     as.foldRight(unit[S, List[B]](Nil))((a, acc) => f(a).map2(acc)(_ :: _))
+}
